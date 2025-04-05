@@ -1,0 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# === Constants and initial values ===
+G = 1.62  # Moon gravity
+main_thrust = 430  # N
+side_thrust = 200  # N
+mass_dry = 150  # kg
+fuel = 120  # kg
+mass = mass_dry + fuel
+burn_rate = 0.2  # kg/s
+
+# initial conditions
+altitude = 30000  # m
+vv = -24.8  # vertical velocity
+vh = 1700    # horizontal velocity
+dt = 0.1  # time step
+
+# PID targets
+target_vv = -2.0
+target_vh = 0.0
+
+# PID coefficients – tried some values until it didn't crash instantly
+kp_v, ki_v, kd_v = 0.6, 0.01, 1.2
+kp_h, ki_h, kd_h = 0.4, 0.0, 0.8
+
+int_vv = 0
+int_vh = 0
+prev_err_vv = 0
+prev_err_vh = 0
+
+time = 0
+max_time = 1000  # max sim time
+
+# logs (for graph later)
+t_log = []
+alt_log = []
+vv_log = []
+vh_log = []
+mass_log = []
+
+# === Main simulation loop ===
+while altitude > 0 and time < max_time:
+    # --- Vertical PID ---
+    err_vv = target_vv - vv
+    int_vv += err_vv * dt
+    der_vv = (err_vv - prev_err_vv) / dt
+    pid_vv = kp_v * err_vv + ki_v * int_vv + kd_v * der_vv
+    prev_err_vv = err_vv
+
+    # --- Horizontal PID ---
+    err_vh = target_vh - vh
+    int_vh += err_vh * dt
+    der_vh = (err_vh - prev_err_vh) / dt
+    pid_vh = kp_h * err_vh + ki_h * int_vh + kd_h * der_vh
+    prev_err_vh = err_vh
+
+    # limit thrusts to engine capabilities
+    acc_v = min(pid_vv, main_thrust / mass)
+    acc_h = np.clip(pid_vh, -side_thrust / mass, side_thrust / mass)
+
+    # fuel usage (just assume constant burn when thrusting)
+    if mass > mass_dry:
+        mass -= burn_rate * dt
+        if mass < mass_dry:
+            mass = mass_dry
+    else:
+        acc_v = 0
+        acc_h = 0
+
+    # physics update
+    net_acc_v = acc_v - G
+    vv += net_acc_v * dt
+    vh += acc_h * dt
+    altitude += vv * dt
+    if altitude < 0:
+        altitude = 0
+
+    # log everything
+    t_log.append(time)
+    alt_log.append(altitude)
+    vv_log.append(vv)
+    vh_log.append(vh)
+    mass_log.append(mass)
+
+    time += dt
+
+# === Print end result (even though crash is likely) ===
+print("Final Altitude:", altitude)
+print("Vertical Velocity:", vv)
+print("Horizontal Velocity:", vh)
+print("Final Mass:", mass)
+
+# === Plot ===
+plt.figure(figsize=(10, 6))
+plt.title("Beresheet 2D Landing Simulation – Combined")
+plt.plot(t_log, alt_log, label="Altitude (m)")
+plt.plot(t_log, vv_log, label="Vertical Velocity (m/s)")
+plt.plot(t_log, vh_log, label="Horizontal Velocity (m/s)")
+plt.plot(t_log, mass_log, label="Mass (kg)")
+plt.xlabel("Time (s)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
