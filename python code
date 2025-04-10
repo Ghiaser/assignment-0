@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# === Constants and initial values ===
+# Constants and initial values 
 G = 1.62  # Moon gravity
 main_thrust = 430  # N
 side_thrust = 200  # N
@@ -39,16 +39,16 @@ vv_log = []
 vh_log = []
 mass_log = []
 
-# === Main simulation loop ===
+#  Main simulation loop 
 while altitude > 0 and time < max_time:
-    # --- Vertical PID ---
+    #  Vertical PID 
     err_vv = target_vv - vv
     int_vv += err_vv * dt
     der_vv = (err_vv - prev_err_vv) / dt
     pid_vv = kp_v * err_vv + ki_v * int_vv + kd_v * der_vv
     prev_err_vv = err_vv
 
-    # --- Horizontal PID ---
+    #  Horizontal PID 
     err_vh = target_vh - vh
     int_vh += err_vh * dt
     der_vh = (err_vh - prev_err_vh) / dt
@@ -85,13 +85,13 @@ while altitude > 0 and time < max_time:
 
     time += dt
 
-# === Print end result (even though crash is likely) ===
+#  Print end result (even though crash is likely) 
 print("Final Altitude:", altitude)
 print("Vertical Velocity:", vv)
 print("Horizontal Velocity:", vh)
 print("Final Mass:", mass)
 
-# === Plot ===
+#  Plot 
 plt.figure(figsize=(10, 6))
 plt.title("Beresheet 2D Landing Simulation – Combined")
 plt.plot(t_log, alt_log, label="Altitude (m)")
